@@ -41,7 +41,7 @@
     </div>
 
     <div id="step2" class="container">
-        <h2>2. Выберите время</h2>
+        <h2>2. Выберите время (v2)</h2>
         <p>Выбрано: <b id="selected-service-name"></b></p>
         
         <input type="date" id="date-picker" onchange="toggleTimeSlots()">
@@ -108,10 +108,12 @@
             tg.MainButton.show();
         }
 
-        // Финал: Отправка данных
-        // ВАЖНО: Мы перенесли это, чтобы гарантировать, что слушатель не дублируется
-        tg.onEvent('mainButtonClicked', function(){
-            // Показываем уведомление для проверки (можно убрать потом)
+        // Финал: Отправка данных боту
+        Telegram.WebApp.onEvent('mainButtonClicked', function(){
+            // 1. Показываем сообщение для проверки
+            alert("Данные отправляются..."); 
+            
+            // 2. Отправляем данные
             tg.sendData(JSON.stringify(bookingData)); 
         });
 
