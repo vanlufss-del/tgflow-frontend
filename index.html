@@ -72,10 +72,9 @@
         <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
     </div>
 
-    <script>
+<script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        // Скрываем родную кнопку телеграма, чтобы не мешала
         tg.MainButton.hide(); 
 
         let bookingData = { service: null, price: null, date: null, time: null };
@@ -109,16 +108,34 @@
             document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
             
-            // Показываем НАШУ кнопку
             const btn = document.getElementById('custom-main-btn');
             btn.style.display = 'block';
             btn.innerText = `Записаться на ${bookingData.date} в ${time}`;
         }
 
-        // Функция отправки (привязана к нашей HTML кнопке)
+        // --- ГОВОРЯЩАЯ ФУНКЦИЯ ---
         function sendData() {
-            // Отправляем
-            tg.sendData(JSON.stringify(bookingData)); 
+            // ПРОВЕРКА 1: Клик прошел?
+            alert("1. Кнопка нажата! Начинаю отправку...");
+            
+            // Готовим данные
+            const dataToSend = JSON.stringify(bookingData);
+            
+            // ПРОВЕРКА 2: Данные готовы?
+            alert("2. Данные для отправки: " + dataToSend);
+
+            try {
+                // Пытаемся отправить
+                tg.sendData(dataToSend);
+                
+                // ПРОВЕРКА 3: Команда ушла?
+                alert("3. Команда tg.sendData выполнена! Ждите сообщения от бота.");
+                
+                // Закрываем окно (вернем эту строчку, чтобы было видно финал)
+                tg.close();
+            } catch (error) {
+                alert("ОШИБКА: " + error);
+            }
         }
     </script>
 </body>
