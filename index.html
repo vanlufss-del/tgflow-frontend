@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запись на услугу</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            padding: 20px;
+        }
+        h2 { margin-top: 0; }
+        .card {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .card.selected {
+            border-color: var(--tg-theme-button-color, #3390ec);
+        }
+        #main-btn {
+            display: none; /* Кнопка скрыта, пока не выбрана услуга */
+        }
+    </style>
+</head>
+<body>
+    <h2>Выберите услугу</h2>
+    <div id="services-list">
+        <div class="card" onclick="selectService('Стрижка', 500)">
+            <h3>✂️ Стрижка</h3>
+            <p>500 руб.</p>
+        </div>
+        <div class="card" onclick="selectService('Борода', 300)">
+            <h3>🧔 Борода</h3>
+            <p>300 руб.</p>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Расширить на весь экран
+
+        let selectedService = null;
+
+        function selectService(name, price) {
+            selectedService = { name, price };
+            
+            // Подсветка выбранной карточки
+            document.querySelectorAll('.card').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+
+            // Показываем Главную Кнопку Telegram (снизу)
+            tg.MainButton.setText(`Записаться за ${price} руб.`);
+            tg.MainButton.show();
+        }
+
+        // Обработка клика по Главной Кнопке
+        Telegram.WebApp.onEvent('mainButtonClicked', function(){
+            // Отправляем данные обратно боту
+            tg.sendData(JSON.stringify(selectedService)); 
+        });
+    </script>
+</body>
+</html>
