@@ -35,37 +35,46 @@
         .card h3 { margin: 0 0 5px 0; font-size: 18px; }
         .card p { margin: 0; opacity: 0.7; }
 
-        /* --- ЛЕЧЕНИЕ ДЛЯ iPHONE --- */
-        input[type="date"] { 
-            appearance: none;
-            -webkit-appearance: none;
-            display: block;
-            width: 100%; 
-            padding: 15px; 
-            font-size: 18px; 
-            border-radius: 12px; 
-            border: 1px solid var(--tg-theme-hint-color, #333); 
-            margin-top: 15px; 
-            box-sizing: border-box; 
-            outline: none;
-            font-family: inherit;
-            
-            /* Принудительные цвета с !important */
-            background-color: var(--tg-theme-bg-color, #ffffff) !important; 
-            color: var(--tg-theme-text-color, #000000) !important;
+        /* --- ХИТРЫЙ КАЛЕНДАРЬ --- */
+        .date-input-wrapper {
+            position: relative; /* Чтобы внутри можно было накладывать слои */
+            width: 100%;
+            height: 55px;
+            margin-top: 15px;
         }
 
-        /* СПЕЦИАЛЬНЫЙ ХАК ДЛЯ ТЕКСТА ВНУТРИ ДАТЫ НА iOS */
-        input[type="date"]::-webkit-date-and-time-value {
-            text-align: left;
-            color: var(--tg-theme-text-color, #000000) !important;
+        /* 1. Слой Красоты (То, что мы видим) */
+        .date-fake-display {
+            width: 100%;
+            height: 100%;
+            background-color: var(--tg-theme-secondary-bg-color, #efeff3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Текст слева, иконка справа */
+            padding: 0 15px;
+            box-sizing: border-box;
+            color: var(--tg-theme-text-color, #000);
+            font-size: 17px;
+            border: 1px solid transparent;
         }
         
-        /* Иконка календаря */
-        input[type="date"]::-webkit-calendar-picker-indicator {
-            opacity: 0.5;
+        /* Если дата выбрана, подсветим рамку */
+        .date-fake-display.filled {
+            border-color: var(--tg-theme-button-color, #3390ec);
+            font-weight: 600;
+        }
+
+        /* 2. Слой Функционала (Невидимый настоящий календарь) */
+        #date-picker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0; /* ПОЛНОСТЬЮ ПРОЗРАЧНЫЙ */
             cursor: pointer;
-            filter: invert(var(--tg-theme-button-text-color) == #ffffff ? 1 : 0);
+            z-index: 10; /* Лежит поверх всего */
         }
 
         .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
@@ -103,11 +112,16 @@
     </div>
 
     <div id="step2" class="container">
-        <h2>3. Дата и Время</h2>
-        <p style="opacity: 0.7; margin-bottom: 5px;">Услуга:</p>
+        <h2>3. Дата и Время</h2> <p style="opacity: 0.7; margin-bottom: 5px;">Услуга:</p>
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 20px;" id="selected-service-name"></div>
         
-        <input type="date" id="date-picker" onchange="toggleTimeSlots()">
+        <div class="date-input-wrapper">
+            <div id="date-display" class="date-fake-display">
+                📅 Нажмите, чтобы выбрать дату
+            </div>
+            
+            <input type="date" id="date-picker" onchange="handleDateChange()">
+        </div>
         
         <div class="time-slots" id="time-slots" style="display:none; opacity: 0.5;">
             <div class="time-slot" onclick="selectTime('10:00', this)">10:00</div>
@@ -168,13 +182,32 @@
             tg.BackButton.hide();
         });
 
-        function toggleTimeSlots() {
-            const dateVal = document.getElementById('date-picker').value;
+        // --- НОВАЯ ФУНКЦИЯ ДЛЯ КАЛЕНДАРЯ ---
+        function handleDateChange() {
+            const dateInput = document.getElementById('date-picker');
+            const displayDiv = document.getElementById('date-display');
+            
+            const dateVal = dateInput.value;
+            
             if(dateVal) {
-                document.getElementById('time-slots').style.display = 'grid';
-                document.getElementById('time-slots').style.opacity = '1';
-                bookingData.date = dateVal;
+                // Красиво форматируем дату (например: 22.01.2026)
+                const dateObj = new Date(dateVal);
+                const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                const dateStr = dateObj.toLocaleDateString('ru-RU', options);
+                
+                // Обновляем текст на "красивой кнопке"
+                displayDiv.innerText = "🗓 " + dateStr;
+                displayDiv.classList.add('filled'); // Добавляем синюю рамку
+                
+                // Показываем слоты времени
+                toggleTimeSlots(dateVal);
             }
+        }
+
+        function toggleTimeSlots(dateVal) {
+            document.getElementById('time-slots').style.display = 'grid';
+            document.getElementById('time-slots').style.opacity = '1';
+            bookingData.date = dateVal;
         }
 
         function selectTime(time, element) {
@@ -184,7 +217,7 @@
             
             const btn = document.getElementById('custom-main-btn');
             btn.style.display = 'block';
-            btn.innerText = `Подтвердить: ${bookingData.date} в ${time}`;
+            btn.innerText = `Подтвердить запись`;
         }
 
         function sendData() {
