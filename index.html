@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="color-scheme" content="light dark">
     <title>Запись</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -21,7 +22,6 @@
         
         h2 { margin-top: 0; margin-bottom: 20px; font-size: 22px; font-weight: 700; }
         
-        /* КАРТОЧКИ УСЛУГ */
         .card { 
             background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
             padding: 15px; 
@@ -35,38 +35,39 @@
         .card h3 { margin: 0 0 5px 0; font-size: 18px; }
         .card p { margin: 0; opacity: 0.7; }
 
-        /* КАЛЕНДАРЬ (ИСПРАВЛЕНО ДЛЯ iOS) */
+        /* --- ЛЕЧЕНИЕ ДЛЯ iPHONE --- */
         input[type="date"] { 
+            appearance: none;
+            -webkit-appearance: none;
+            display: block;
             width: 100%; 
-            padding: 14px; 
-            font-size: 17px; 
+            padding: 15px; 
+            font-size: 18px; 
             border-radius: 12px; 
-            border: none; 
-            margin-top: 10px; 
+            border: 1px solid var(--tg-theme-hint-color, #333); 
+            margin-top: 15px; 
             box-sizing: border-box; 
             outline: none;
-            
-            /* Цвета берем из темы Телеграма */
-            background-color: var(--tg-theme-secondary-bg-color, #efeff3); 
-            color: var(--tg-theme-text-color, #000);
-            
-            /* Убираем стили Apple */
-            -webkit-appearance: none;
-            appearance: none;
-            position: relative;
             font-family: inherit;
+            
+            /* Принудительные цвета с !important */
+            background-color: var(--tg-theme-bg-color, #ffffff) !important; 
+            color: var(--tg-theme-text-color, #000000) !important;
+        }
+
+        /* СПЕЦИАЛЬНЫЙ ХАК ДЛЯ ТЕКСТА ВНУТРИ ДАТЫ НА iOS */
+        input[type="date"]::-webkit-date-and-time-value {
+            text-align: left;
+            color: var(--tg-theme-text-color, #000000) !important;
         }
         
-        /* Делаем иконку календаря видимой в любой теме */
+        /* Иконка календаря */
         input[type="date"]::-webkit-calendar-picker-indicator {
-            position: absolute;
-            right: 15px;
             opacity: 0.5;
             cursor: pointer;
             filter: invert(var(--tg-theme-button-text-color) == #ffffff ? 1 : 0);
         }
 
-        /* СЛОТЫ ВРЕМЕНИ */
         .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .time-slot { 
             background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
@@ -81,7 +82,6 @@
             color: var(--tg-theme-button-text-color, #ffffff); 
         }
 
-        /* КНОПКА */
         #custom-main-btn {
             display: none; width: 100%; padding: 16px; margin-top: 25px;
             background-color: var(--tg-theme-button-color, #3390ec); 
@@ -103,11 +103,11 @@
     </div>
 
     <div id="step2" class="container">
-        <h2>Выберите время</h2>
+        <h2>3. Дата и Время</h2>
         <p style="opacity: 0.7; margin-bottom: 5px;">Услуга:</p>
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 20px;" id="selected-service-name"></div>
         
-        <input type="date" id="date-picker" onchange="toggleTimeSlots()" placeholder="Нажмите для выбора даты">
+        <input type="date" id="date-picker" onchange="toggleTimeSlots()">
         
         <div class="time-slots" id="time-slots" style="display:none; opacity: 0.5;">
             <div class="time-slot" onclick="selectTime('10:00', this)">10:00</div>
@@ -127,7 +127,6 @@
 
         let bookingData = { service: null, price: null, date: null, time: null };
 
-        // Загрузка услуг
         function loadServices() {
             const urlParams = new URLSearchParams(window.location.search);
             const dataRaw = urlParams.get('data');
@@ -140,7 +139,6 @@
             }
             
             if (services.length === 0) {
-                // Если услуг нет, покажем заглушку (или пустоту)
                 listContainer.innerHTML = '<p style="text-align:center; opacity:0.5">Нет доступных услуг</p>';
                 return;
             }
@@ -186,8 +184,6 @@
             
             const btn = document.getElementById('custom-main-btn');
             btn.style.display = 'block';
-            
-            // Красивая дата для кнопки (опционально)
             btn.innerText = `Подтвердить: ${bookingData.date} в ${time}`;
         }
 
