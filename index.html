@@ -103,12 +103,12 @@
         }
 
         // --- ВОТ ЗДЕСЬ МЫ ИЗМЕНИЛИ ЛОГИКУ ---
-        // Используем onClick - это надежнее
+        // Используем onClick
         tg.MainButton.onClick(function(){
             // 1. Отправляем данные
             tg.sendData(JSON.stringify(bookingData)); 
-            // 2. Принудительно закрываем окно (чтобы не висело)
-            tg.close();
+            
+            
         });
     </script>
 </body>
