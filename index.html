@@ -20,51 +20,25 @@
         input[type="date"] { width: 100%; padding: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px; box-sizing: border-box; }
         h2 { margin-top: 0; }
 
-        /* СТИЛИ ДЛЯ НАШЕЙ НОВОЙ КНОПКИ */
         #custom-main-btn {
-            display: none; /* Скрыта по умолчанию */
-            width: 100%;
-            padding: 15px;
-            margin-top: 20px;
-            background-color: #3390ec; /* Цвет Телеграма */
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
+            display: none; width: 100%; padding: 15px; margin-top: 20px;
+            background-color: #3390ec; color: white; border: none;
+            border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer;
         }
-        #custom-main-btn:active {
-            opacity: 0.8;
-        }
+        #custom-main-btn:active { opacity: 0.8; }
     </style>
 </head>
 <body>
 
     <div id="step1" class="container active">
-        <h2>1. Выберите услугу (FINAL V3)</h2>
-        <div id="services-list">
-            <div class="card" onclick="selectService('Стрижка', 500)">
-                <h3>✂️ Стрижка</h3>
-                <p>500 руб.</p>
-            </div>
-            <div class="card" onclick="selectService('Борода', 300)">
-                <h3>🧔 Борода</h3>
-                <p>300 руб.</p>
-            </div>
-             <div class="card" onclick="selectService('Комплекс', 700)">
-                <h3>🔥 Комплекс</h3>
-                <p>700 руб.</p>
-            </div>
-        </div>
+        <h2>1. Выберите услугу (DYNAMIC)</h2>
+        <div id="services-list"></div>
     </div>
 
     <div id="step2" class="container">
         <h2>2. Выберите время</h2>
         <p>Выбрано: <b id="selected-service-name"></b></p>
-        
         <input type="date" id="date-picker" onchange="toggleTimeSlots()">
-        
         <div class="time-slots" id="time-slots" style="display:none; opacity: 0.5;">
             <div class="time-slot" onclick="selectTime('10:00', this)">10:00</div>
             <div class="time-slot" onclick="selectTime('12:00', this)">12:00</div>
@@ -72,7 +46,6 @@
             <div class="time-slot" onclick="selectTime('16:00', this)">16:00</div>
             <div class="time-slot" onclick="selectTime('18:00', this)">18:00</div>
         </div>
-
         <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
     </div>
 
@@ -82,6 +55,48 @@
         tg.MainButton.hide(); 
 
         let bookingData = { service: null, price: null, date: null, time: null };
+
+        // --- НОВАЯ ЛОГИКА: ЧИТАЕМ УСЛУГИ ИЗ ССЫЛКИ ---
+        function loadServices() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const dataRaw = urlParams.get('data');
+            
+            const listContainer = document.getElementById('services-list');
+            
+            let services = [];
+            
+            if (dataRaw) {
+                try {
+                    // Декодируем данные, которые прислал питон
+                    services = JSON.parse(decodeURIComponent(dataRaw));
+                } catch (e) {
+                    console.error("Ошибка чтения данных", e);
+                }
+            }
+            
+            // Если пусто (или открыли без бота) - покажем заглушку
+            if (services.length === 0) {
+                services = [{name: "Ошибка загрузки", price: 0}];
+            }
+
+            // Генерируем HTML карточки
+            services.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => selectService(s.name, s.price);
+                
+                card.innerHTML = `
+                    <h3>⚡ ${s.name}</h3>
+                    <p>${s.price} руб.</p>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        // Запускаем загрузку сразу при старте
+        loadServices();
+
+        // --- ДАЛЬШЕ ВСЁ ПО-СТАРОМУ ---
 
         function selectService(name, price) {
             bookingData.service = name;
@@ -118,16 +133,10 @@
         }
 
         function sendData() {
-            // 1. Визуально показываем, что клик прошел
             const btn = document.getElementById('custom-main-btn');
             btn.innerText = "⏳ Отправка...";
             btn.style.opacity = "0.7";
-
-            // 2. Отправляем данные
             tg.sendData(JSON.stringify(bookingData)); 
-            
-            // Мы специально НЕ закрываем окно (tg.close), чтобы данные успели уйти.
-            // Бот пришлет сообщение, и вы закроете окно крестиком.
         }
     </script>
 </body>
