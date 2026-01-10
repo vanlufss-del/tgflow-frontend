@@ -19,12 +19,30 @@
 
         input[type="date"] { width: 100%; padding: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px; box-sizing: border-box; }
         h2 { margin-top: 0; }
+
+        /* СТИЛИ ДЛЯ НАШЕЙ НОВОЙ КНОПКИ */
+        #custom-main-btn {
+            display: none; /* Скрыта по умолчанию */
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background-color: #3390ec; /* Цвет Телеграма */
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #custom-main-btn:active {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
 
     <div id="step1" class="container active">
-        <h2>1. Выберите услугу (SUPER FINAL)</h2>
+        <h2>1. Выберите услугу (HTML VERSION)</h2>
         <div id="services-list">
             <div class="card" onclick="selectService('Стрижка', 500)">
                 <h3>✂️ Стрижка</h3>
@@ -33,10 +51,6 @@
             <div class="card" onclick="selectService('Борода', 300)">
                 <h3>🧔 Борода</h3>
                 <p>300 руб.</p>
-            </div>
-            <div class="card" onclick="selectService('Комплекс', 700)">
-                <h3>🔥 Комплекс</h3>
-                <p>700 руб.</p>
             </div>
         </div>
     </div>
@@ -54,18 +68,17 @@
             <div class="time-slot" onclick="selectTime('16:00', this)">16:00</div>
             <div class="time-slot" onclick="selectTime('18:00', this)">18:00</div>
         </div>
+
+        <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        // Скрываем родную кнопку телеграма, чтобы не мешала
+        tg.MainButton.hide(); 
 
-        let bookingData = {
-            service: null,
-            price: null,
-            date: null,
-            time: null
-        };
+        let bookingData = { service: null, price: null, date: null, time: null };
 
         function selectService(name, price) {
             bookingData.service = name;
@@ -80,7 +93,6 @@
             document.getElementById('step2').classList.remove('active');
             document.getElementById('step1').classList.add('active');
             tg.BackButton.hide();
-            tg.MainButton.hide();
         });
 
         function toggleTimeSlots() {
@@ -97,19 +109,17 @@
             document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
             
-            // Настраиваем кнопку
-            tg.MainButton.setText(`Записаться на ${bookingData.date} в ${time}`);
-            tg.MainButton.show();
+            // Показываем НАШУ кнопку
+            const btn = document.getElementById('custom-main-btn');
+            btn.style.display = 'block';
+            btn.innerText = `Записаться на ${bookingData.date} в ${time}`;
         }
 
-        // --- ВОТ ЗДЕСЬ МЫ ИЗМЕНИЛИ ЛОГИКУ ---
-        // Используем onClick
-        tg.MainButton.onClick(function(){
-            // 1. Отправляем данные
+        // Функция отправки (привязана к нашей HTML кнопке)
+        function sendData() {
+            // Отправляем
             tg.sendData(JSON.stringify(bookingData)); 
-            
-            
-        });
+        }
     </script>
 </body>
 </html>
