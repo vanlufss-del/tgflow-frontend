@@ -24,7 +24,7 @@
 <body>
 
     <div id="step1" class="container active">
-        <h2>1. Выберите услугу (Final)</h2>
+        <h2>1. Выберите услугу (SUPER FINAL)</h2>
         <div id="services-list">
             <div class="card" onclick="selectService('Стрижка', 500)">
                 <h3>✂️ Стрижка</h3>
@@ -96,13 +96,19 @@
             bookingData.time = time;
             document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
+            
+            // Настраиваем кнопку
             tg.MainButton.setText(`Записаться на ${bookingData.date} в ${time}`);
             tg.MainButton.show();
         }
 
-        // ОТПРАВКА ДАННЫХ
-        Telegram.WebApp.onEvent('mainButtonClicked', function(){
+        // --- ВОТ ЗДЕСЬ МЫ ИЗМЕНИЛИ ЛОГИКУ ---
+        // Используем onClick - это надежнее
+        tg.MainButton.onClick(function(){
+            // 1. Отправляем данные
             tg.sendData(JSON.stringify(bookingData)); 
+            // 2. Принудительно закрываем окно (чтобы не висело)
+            tg.close();
         });
     </script>
 </body>
