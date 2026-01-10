@@ -114,28 +114,13 @@
         }
 
         // --- ГОВОРЯЩАЯ ФУНКЦИЯ ---
-        function sendData() {
-            // ПРОВЕРКА 1: Клик прошел?
-            alert("1. Кнопка нажата! Начинаю отправку...");
+function sendData() {
+            // Просто отправляем данные
+            tg.sendData(JSON.stringify(bookingData)); 
             
-            // Готовим данные
-            const dataToSend = JSON.stringify(bookingData);
-            
-            // ПРОВЕРКА 2: Данные готовы?
-            alert("2. Данные для отправки: " + dataToSend);
-
-            try {
-                // Пытаемся отправить
-                tg.sendData(dataToSend);
-                
-                // ПРОВЕРКА 3: Команда ушла?
-                alert("3. Команда tg.sendData выполнена! Ждите сообщения от бота.");
-                
-                // Закрываем окно (вернем эту строчку, чтобы было видно финал)
-                tg.close();
-            } catch (error) {
-                alert("ОШИБКА: " + error);
-            }
+            // alert мы убрали, чтобы не мешал
+            // tg.close() мы тоже убрали, чтобы окно не захлопнулось раньше времени
+        }
         }
     </script>
 </body>
