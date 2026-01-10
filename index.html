@@ -55,7 +55,7 @@
         </div>
     </div>
 
-    <script>
+<script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
@@ -71,13 +71,11 @@
             bookingData.service = name;
             bookingData.price = price;
             
-            // Визуально переходим на следующий шаг
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step2').classList.add('active');
             
             document.getElementById('selected-service-name').innerText = name;
             
-            // Кнопка "Назад"
             tg.BackButton.show();
             tg.BackButton.onClick(() => {
                 document.getElementById('step2').classList.remove('active');
@@ -87,7 +85,7 @@
             });
         }
 
-        // Активация слотов после выбора даты
+        // Активация слотов
         function toggleTimeSlots() {
             const dateVal = document.getElementById('date-picker').value;
             if(dateVal) {
@@ -105,13 +103,15 @@
             document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
 
-            // Показываем кнопку "Записаться"
+            // Включаем кнопку
             tg.MainButton.setText(`Записаться на ${bookingData.date} в ${time}`);
             tg.MainButton.show();
         }
 
-        // Финал: Отправка данных боту
-        Telegram.WebApp.onEvent('mainButtonClicked', function(){
+        // Финал: Отправка данных
+        // ВАЖНО: Мы перенесли это, чтобы гарантировать, что слушатель не дублируется
+        tg.onEvent('mainButtonClicked', function(){
+            // Показываем уведомление для проверки (можно убрать потом)
             tg.sendData(JSON.stringify(bookingData)); 
         });
 
