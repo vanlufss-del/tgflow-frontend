@@ -74,6 +74,27 @@
             z-index: 10; 
         }
 
+        /* --- !ВАЖНО: ИСПРАВЛЕНИЕ ДЛЯ КОМПЬЮТЕРОВ (WEB) --- */
+        /* Если устройство имеет мышку (hover), мы меняем поведение */
+        @media (hover: hover) and (pointer: fine) {
+            /* Прячем нашу "красивую кнопку", так как на ПК она мешает */
+            .date-fake-display {
+                display: none;
+            }
+
+            /* Делаем настоящий календарь видимым и красивым */
+            #date-picker {
+                position: relative; /* Возвращаем в поток */
+                opacity: 1; /* Делаем видимым */
+                background-color: var(--tg-theme-secondary-bg-color, #efeff3);
+                color: var(--tg-theme-text-color, #000);
+                padding: 10px;
+                border: 1px solid var(--tg-theme-hint-color, #ccc);
+                border-radius: 12px;
+                z-index: 1;
+            }
+        }
+
         .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
         .time-slot { 
             background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
@@ -88,7 +109,7 @@
             color: var(--tg-theme-button-text-color, #ffffff); 
         }
 
-        /* --- СТИЛЬ ДЛЯ ЗАНЯТЫХ СЛОТОВ (НОВОЕ) --- */
+        /* --- СТИЛЬ ДЛЯ ЗАНЯТЫХ СЛОТОВ --- */
         .time-slot.disabled {
             opacity: 0.3; /* Полупрозрачный */
             background-color: #ccc; /* Серый фон */
