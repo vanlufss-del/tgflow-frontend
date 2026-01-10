@@ -42,7 +42,7 @@
 <body>
 
     <div id="step1" class="container active">
-        <h2>1. Выберите услугу (HTML VERSION)</h2>
+        <h2>1. Выберите услугу (FINAL V3)</h2>
         <div id="services-list">
             <div class="card" onclick="selectService('Стрижка', 500)">
                 <h3>✂️ Стрижка</h3>
@@ -51,6 +51,10 @@
             <div class="card" onclick="selectService('Борода', 300)">
                 <h3>🧔 Борода</h3>
                 <p>300 руб.</p>
+            </div>
+             <div class="card" onclick="selectService('Комплекс', 700)">
+                <h3>🔥 Комплекс</h3>
+                <p>700 руб.</p>
             </div>
         </div>
     </div>
@@ -72,7 +76,7 @@
         <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
     </div>
 
-<script>
+    <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
         tg.MainButton.hide(); 
@@ -113,14 +117,17 @@
             btn.innerText = `Записаться на ${bookingData.date} в ${time}`;
         }
 
-        // --- ГОВОРЯЩАЯ ФУНКЦИЯ ---
-function sendData() {
-            // Просто отправляем данные
+        function sendData() {
+            // 1. Визуально показываем, что клик прошел
+            const btn = document.getElementById('custom-main-btn');
+            btn.innerText = "⏳ Отправка...";
+            btn.style.opacity = "0.7";
+
+            // 2. Отправляем данные
             tg.sendData(JSON.stringify(bookingData)); 
             
-            // alert мы убрали, чтобы не мешал
-            // tg.close() мы тоже убрали, чтобы окно не захлопнулось раньше времени
-        }
+            // Мы специально НЕ закрываем окно (tg.close), чтобы данные успели уйти.
+            // Бот пришлет сообщение, и вы закроете окно крестиком.
         }
     </script>
 </body>
