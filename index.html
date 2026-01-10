@@ -3,68 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Запись на услугу</title>
+    <title>Запись</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            font-family: sans-serif;
-            background-color: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
-            padding: 20px;
-        }
+        body { font-family: sans-serif; background-color: var(--tg-theme-bg-color, #fff); color: var(--tg-theme-text-color, #000); padding: 20px; }
+        .container { display: none; }
+        .container.active { display: block; }
+        
+        /* Карточки услуг */
+        .card { background: var(--tg-theme-secondary-bg-color, #f0f0f0); padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; }
+        .card.selected { border-color: var(--tg-theme-button-color, #3390ec); }
+        
+        /* Слоты времени */
+        .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .time-slot { background: var(--tg-theme-secondary-bg-color, #f0f0f0); padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; border: 2px solid transparent; }
+        .time-slot.selected { background-color: var(--tg-theme-button-color, #3390ec); color: #fff; }
+
+        /* Календарь */
+        input[type="date"] { width: 100%; padding: 10px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px; box-sizing: border-box; }
         h2 { margin-top: 0; }
-        .card {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-        .card.selected {
-            border-color: var(--tg-theme-button-color, #3390ec);
-        }
-        #main-btn {
-            display: none; /* Кнопка скрыта, пока не выбрана услуга */
-        }
     </style>
 </head>
 <body>
-    <h2>Выберите услугу</h2>
-    <div id="services-list">
-        <div class="card" onclick="selectService('Стрижка', 500)">
-            <h3>✂️ Стрижка</h3>
-            <p>500 руб.</p>
+
+    <div id="step1" class="container active">
+        <h2>1. Выберите услугу</h2>
+        <div id="services-list">
+            <div class="card" onclick="selectService('Стрижка', 500)">
+                <h3>✂️ Стрижка</h3>
+                <p>500 руб.</p>
+            </div>
+            <div class="card" onclick="selectService('Борода', 300)">
+                <h3>🧔 Борода</h3>
+                <p>300 руб.</p>
+            </div>
         </div>
-        <div class="card" onclick="selectService('Борода', 300)">
-            <h3>🧔 Борода</h3>
-            <p>300 руб.</p>
+    </div>
+
+    <div id="step2" class="container">
+        <h2>2. Выберите время</h2>
+        <p>Выбрано: <b id="selected-service-name"></b></p>
+        
+        <input type="date" id="date-picker" onchange="toggleTimeSlots()">
+        
+        <div class="time-slots" id="time-slots" style="display:none; opacity: 0.5;">
+            <div class="time-slot" onclick="selectTime('10:00', this)">10:00</div>
+            <div class="time-slot" onclick="selectTime('12:00', this)">12:00</div>
+            <div class="time-slot" onclick="selectTime('14:30', this)">14:30</div>
+            <div class="time-slot" onclick="selectTime('16:00', this)">16:00</div>
+            <div class="time-slot" onclick="selectTime('18:00', this)">18:00</div>
         </div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
-        tg.expand(); // Расширить на весь экран
+        tg.expand();
 
-        let selectedService = null;
+        let bookingData = {
+            service: null,
+            price: null,
+            date: null,
+            time: null
+        };
 
+        // Шаг 1: Выбор услуги
         function selectService(name, price) {
-            selectedService = { name, price };
+            bookingData.service = name;
+            bookingData.price = price;
             
-            // Подсветка выбранной карточки
-            document.querySelectorAll('.card').forEach(el => el.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
+            // Визуально переходим на следующий шаг
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            
+            document.getElementById('selected-service-name').innerText = name;
+            
+            // Кнопка "Назад"
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => {
+                document.getElementById('step2').classList.remove('active');
+                document.getElementById('step1').classList.add('active');
+                tg.BackButton.hide();
+                tg.MainButton.hide();
+            });
+        }
 
-            // Показываем Главную Кнопку Telegram (снизу)
-            tg.MainButton.setText(`Записаться за ${price} руб.`);
+        // Активация слотов после выбора даты
+        function toggleTimeSlots() {
+            const dateVal = document.getElementById('date-picker').value;
+            if(dateVal) {
+                document.getElementById('time-slots').style.display = 'grid';
+                document.getElementById('time-slots').style.opacity = '1';
+                bookingData.date = dateVal;
+            }
+        }
+
+        // Шаг 2: Выбор времени
+        function selectTime(time, element) {
+            bookingData.time = time;
+
+            // Подсветка
+            document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+
+            // Показываем кнопку "Записаться"
+            tg.MainButton.setText(`Записаться на ${bookingData.date} в ${time}`);
             tg.MainButton.show();
         }
 
-        // Обработка клика по Главной Кнопке
+        // Финал: Отправка данных боту
         Telegram.WebApp.onEvent('mainButtonClicked', function(){
-            // Отправляем данные обратно боту
-            tg.sendData(JSON.stringify(selectedService)); 
+            tg.sendData(JSON.stringify(bookingData)); 
         });
+
     </script>
 </body>
 </html>
