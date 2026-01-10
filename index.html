@@ -110,13 +110,8 @@
 
         // Финал: Отправка данных боту
         Telegram.WebApp.onEvent('mainButtonClicked', function(){
-            // 1. Показываем сообщение для проверки
-            alert("Данные отправляются..."); 
-            
-            // 2. Отправляем данные
             tg.sendData(JSON.stringify(bookingData)); 
         });
-
     </script>
 </body>
 </html>
