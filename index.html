@@ -75,17 +75,11 @@
         }
 
         /* --- !ВАЖНО: ИСПРАВЛЕНИЕ ДЛЯ КОМПЬЮТЕРОВ (WEB) --- */
-        /* Если устройство имеет мышку (hover), мы меняем поведение */
         @media (hover: hover) and (pointer: fine) {
-            /* Прячем нашу "красивую кнопку", так как на ПК она мешает */
-            .date-fake-display {
-                display: none;
-            }
-
-            /* Делаем настоящий календарь видимым и красивым */
+            .date-fake-display { display: none; }
             #date-picker {
-                position: relative; /* Возвращаем в поток */
-                opacity: 1; /* Делаем видимым */
+                position: relative; 
+                opacity: 1; 
                 background-color: var(--tg-theme-secondary-bg-color, #efeff3);
                 color: var(--tg-theme-text-color, #000);
                 padding: 10px;
@@ -111,10 +105,10 @@
 
         /* --- СТИЛЬ ДЛЯ ЗАНЯТЫХ СЛОТОВ --- */
         .time-slot.disabled {
-            opacity: 0.3; /* Полупрозрачный */
-            background-color: #ccc; /* Серый фон */
-            text-decoration: line-through; /* Зачеркнутый текст */
-            pointer-events: none; /* Нельзя нажать */
+            opacity: 0.3; 
+            background-color: #ccc; 
+            text-decoration: line-through; 
+            pointer-events: none; 
             cursor: not-allowed;
         }
 
@@ -150,13 +144,7 @@
             <input type="date" id="date-picker" onchange="handleDateChange()">
         </div>
         
-        <div class="time-slots" id="time-slots" style="display:none; opacity: 0.5;">
-            <div class="time-slot" onclick="selectTime('10:00', this)">10:00</div>
-            <div class="time-slot" onclick="selectTime('12:00', this)">12:00</div>
-            <div class="time-slot" onclick="selectTime('14:30', this)">14:30</div>
-            <div class="time-slot" onclick="selectTime('16:00', this)">16:00</div>
-            <div class="time-slot" onclick="selectTime('18:00', this)">18:00</div>
-        </div>
+        <div class="time-slots" id="time-slots" style="display:none;"></div>
 
         <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
     </div>
@@ -167,7 +155,8 @@
         tg.MainButton.hide(); 
 
         let bookingData = { service: null, price: null, date: null, time: null };
-        let busySlots = {}; // Сюда мы загрузим "Черный список"
+        let busySlots = {}; 
+        let availableSlots = []; // СЮДА ПРИДЕТ СПИСОК ВРЕМЕНИ ОТ БОТА
 
         function loadServices() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -178,15 +167,13 @@
             
             if (dataRaw) {
                 try { 
-                    // Пытаемся понять, что прислал бот
                     const parsedData = JSON.parse(decodeURIComponent(dataRaw)); 
                     
-                    // Если это новый формат с ключом 'busy'
                     if (parsedData.services) {
                         services = parsedData.services;
-                        busySlots = parsedData.busy || {}; // Сохраняем занятое время
+                        busySlots = parsedData.busy || {}; 
+                        availableSlots = parsedData.slots || []; // Получаем часы от мастера
                     } else {
-                        // Поддержка старой версии (на всякий случай)
                         services = parsedData;
                     }
                 } 
@@ -237,30 +224,36 @@
                 displayDiv.innerText = "🗓 " + dateStr;
                 displayDiv.classList.add('filled'); 
                 
-                toggleTimeSlots(dateVal);
+                renderTimeSlots(dateVal); // ЗАПУСКАЕМ ГЕНЕРАЦИЮ КНОПОК
             }
         }
 
-        // --- УМНАЯ ФУНКЦИЯ ПОКАЗА СЛОТОВ ---
-        function toggleTimeSlots(dateVal) {
-            document.getElementById('time-slots').style.display = 'grid';
-            document.getElementById('time-slots').style.opacity = '1';
+        // --- НОВАЯ ФУНКЦИЯ: РИСУЕМ КНОПКИ ВРЕМЕНИ ДИНАМИЧЕСКИ ---
+        function renderTimeSlots(dateVal) {
+            const container = document.getElementById('time-slots');
+            container.innerHTML = ''; // Очищаем старые кнопки
+            container.style.display = 'grid';
+            container.style.opacity = '1';
+            
             bookingData.date = dateVal;
 
-            // Получаем список занятого времени для выбранной даты
             const busyTimesForDate = busySlots[dateVal] || [];
 
-            // Пробегаем по всем кнопкам
-            const allSlots = document.querySelectorAll('.time-slot');
-            allSlots.forEach(slot => {
-                // Сброс
-                slot.classList.remove('selected');
-                slot.classList.remove('disabled');
-
-                // Если время есть в черном списке - блокируем
-                if (busyTimesForDate.includes(slot.innerText)) {
+            // ИСПОЛЬЗУЕМ СПИСОК ЧАСОВ ОТ БОТА (availableSlots)
+            availableSlots.forEach(time => {
+                const slot = document.createElement('div');
+                slot.className = 'time-slot';
+                slot.innerText = time;
+                
+                // Проверяем занятость
+                if (busyTimesForDate.includes(time)) {
                     slot.classList.add('disabled');
+                } else {
+                    // Вешаем клик только если свободно
+                    slot.onclick = () => selectTime(time, slot);
                 }
+                
+                container.appendChild(slot);
             });
 
             // Прячем кнопку записи, если она была активна
@@ -268,7 +261,6 @@
         }
 
         function selectTime(time, element) {
-            // Если кнопка заблокирована - игнорируем клик
             if (element.classList.contains('disabled')) return;
 
             bookingData.time = time;
