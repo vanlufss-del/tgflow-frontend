@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="color-scheme" content="light dark">
-    <title>Запись</title>
+    <title>Онлайн Запись</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* --- ОСНОВНЫЕ СТИЛИ --- */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
             background-color: var(--tg-theme-bg-color, #fff); 
@@ -16,26 +17,60 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        .container { display: none; animation: fadeIn 0.3s; }
-        .container.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Анимация появления экранов */
+        .container { 
+            display: none; 
+            animation: fadeIn 0.3s ease-in-out; 
+        }
+        .container.active { 
+            display: block; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
         
-        h2 { margin-top: 0; margin-bottom: 20px; font-size: 22px; font-weight: 700; }
+        h2 { 
+            margin-top: 0; 
+            margin-bottom: 20px; 
+            font-size: 22px; 
+            font-weight: 700; 
+        }
+
+        /* Кнопка НАЗАД */
+        .back-btn {
+            color: var(--tg-theme-link-color, #3390ec);
+            font-size: 16px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        .back-btn:active { opacity: 0.6; }
         
+        /* КАРТОЧКИ (Мастера и Услуги) */
         .card { 
             background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
-            padding: 15px; 
-            border-radius: 12px; 
+            padding: 16px; 
+            border-radius: 14px; 
             margin-bottom: 12px; 
             cursor: pointer; 
             border: 2px solid transparent; 
-            transition: transform 0.1s;
+            transition: transform 0.1s, background-color 0.1s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .card:active { transform: scale(0.98); }
-        .card h3 { margin: 0 0 5px 0; font-size: 18px; }
-        .card p { margin: 0; opacity: 0.7; }
+        .card:active { 
+            transform: scale(0.98); 
+            background-color: var(--tg-theme-hint-color, #e0e0e0);
+        }
+        .card h3 { margin: 0; font-size: 17px; font-weight: 600; }
+        .card p { margin: 5px 0 0 0; opacity: 0.7; font-size: 14px; }
+        .card-price { font-weight: 600; color: var(--tg-theme-button-color, #3390ec); }
 
-        /* --- ХИТРЫЙ КАЛЕНДАРЬ --- */
+        /* --- КАЛЕНДАРЬ (FIX ДЛЯ iPHONE) --- */
         .date-input-wrapper {
             position: relative; 
             width: 100%; 
@@ -43,6 +78,7 @@
             margin-top: 15px;
         }
 
+        /* Видимая часть (Красивая кнопка) */
         .date-fake-display {
             width: 100%; 
             height: 100%; 
@@ -56,13 +92,17 @@
             color: var(--tg-theme-text-color, #000); 
             font-size: 17px; 
             border: 1px solid transparent;
+            font-weight: 500;
         }
         
+        /* Когда дата выбрана */
         .date-fake-display.filled {
             border-color: var(--tg-theme-button-color, #3390ec);
             font-weight: 600;
+            color: var(--tg-theme-button-color, #3390ec);
         }
 
+        /* Невидимый настоящий инпут */
         #date-picker {
             position: absolute; 
             top: 0; 
@@ -74,22 +114,33 @@
             z-index: 10; 
         }
 
-        /* --- !ВАЖНО: ИСПРАВЛЕНИЕ ДЛЯ КОМПЬЮТЕРОВ (WEB) --- */
+        /* --- СПЕЦИАЛЬНЫЙ СТИЛЬ ДЛЯ ПК (Telegram Desktop) --- */
+        /* Если есть мышка, показываем обычный календарь, а фейковый прячем */
         @media (hover: hover) and (pointer: fine) {
             .date-fake-display { display: none; }
             #date-picker {
                 position: relative; 
                 opacity: 1; 
+                width: 100%;
                 background-color: var(--tg-theme-secondary-bg-color, #efeff3);
                 color: var(--tg-theme-text-color, #000);
-                padding: 10px;
+                padding: 12px; 
+                border-radius: 12px; 
                 border: 1px solid var(--tg-theme-hint-color, #ccc);
-                border-radius: 12px;
+                font-size: 16px;
+                box-sizing: border-box;
                 z-index: 1;
             }
         }
 
-        .time-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        /* СЕТКА ВРЕМЕНИ */
+        .time-slots { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); /* 3 колонки */
+            gap: 10px; 
+            margin-top: 25px; 
+        }
+        
         .time-slot { 
             background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
             padding: 12px; 
@@ -97,13 +148,15 @@
             border-radius: 10px; 
             cursor: pointer; 
             font-weight: 500;
+            transition: background-color 0.1s;
         }
+        
         .time-slot.selected { 
             background-color: var(--tg-theme-button-color, #3390ec); 
             color: var(--tg-theme-button-text-color, #ffffff); 
         }
-
-        /* --- СТИЛЬ ДЛЯ ЗАНЯТЫХ СЛОТОВ --- */
+        
+        /* Заблокированное время */
         .time-slot.disabled {
             opacity: 0.3; 
             background-color: #ccc; 
@@ -112,16 +165,21 @@
             cursor: not-allowed;
         }
 
-        /* Сообщение, если нет слотов (выходной) */
+        /* Сообщение "Нет записи" */
         .no-slots-msg {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 30px;
             color: var(--tg-theme-hint-color, #888);
             font-style: italic;
+            font-size: 16px;
         }
 
+        /* ГЛАВНАЯ КНОПКА ПОДТВЕРЖДЕНИЯ */
         #custom-main-btn {
-            display: none; width: 100%; padding: 16px; margin-top: 25px;
+            display: none; 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 30px;
             background-color: var(--tg-theme-button-color, #3390ec); 
             color: var(--tg-theme-button-text-color, #ffffff); 
             border: none;
@@ -129,33 +187,48 @@
             font-size: 17px; 
             font-weight: 600; 
             cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        #custom-main-btn:active { opacity: 0.8; }
+        #custom-main-btn:active { opacity: 0.8; transform: translateY(1px); }
+        
+        .loading-text { text-align: center; margin-top: 50px; opacity: 0.5; }
     </style>
 </head>
 <body>
 
-    <div id="step1" class="container active">
-        <h2>Выберите услугу</h2>
+    <div id="step0" class="container active">
+        <h2>Выберите специалиста</h2>
+        <div id="masters-list">
+            <div class="loading-text">Загрузка данных...</div>
+        </div>
+    </div>
+
+    <div id="step1" class="container">
+        <div class="back-btn" onclick="goToStep(0)">⬅ Назад к специалистам</div>
+        <h2>Услуги: <span id="master-name-display" style="color: var(--tg-theme-button-color);"></span></h2>
         <div id="services-list"></div>
     </div>
 
     <div id="step2" class="container">
-        <h2>3. Дата и Время</h2> <p style="opacity: 0.7; margin-bottom: 5px;">Услуга:</p>
+        <div class="back-btn" onclick="goToStep(1)">⬅ Назад к услугам</div>
+        <h2>Дата и Время</h2> 
+        <p style="opacity: 0.7; margin-bottom: 5px;">Выбрана услуга:</p>
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 20px;" id="selected-service-name"></div>
         
         <div class="date-input-wrapper">
             <div id="date-display" class="date-fake-display">
                 📅 Нажмите, чтобы выбрать дату
             </div>
-            
             <input type="date" id="date-picker" onchange="handleDateChange()">
         </div>
         
         <div class="time-slots" id="time-slots" style="display:none;"></div>
-        <div id="no-slots-msg" class="no-slots-msg" style="display:none;">В этот день записи нет (Выходной)</div>
+        
+        <div id="no-slots-msg" class="no-slots-msg" style="display:none;">
+            В этот день записи нет (Выходной)
+        </div>
 
-        <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
+        <button id="custom-main-btn" onclick="sendData()">ПОДТВЕРДИТЬ ЗАПИСЬ</button>
     </div>
 
     <script>
@@ -163,64 +236,124 @@
         tg.expand();
         tg.MainButton.hide(); 
 
-        let bookingData = { service: null, price: null, date: null, time: null };
-        let busySlots = {}; 
-        let globalSlots = []; // Общее расписание
-        let specialSchedule = {}; // Исключения (спец-дни)
+        // Хранилище всех данных
+        let allData = { masters: [] };
+        
+        // Объект текущего выбора
+        let selection = {
+            masterId: null,
+            service: null,
+            price: null,
+            date: null,
+            time: null
+        };
 
-        function loadServices() {
+        // --- 1. ЗАГРУЗКА И ПАРСИНГ ДАННЫХ ---
+        function loadData() {
             const urlParams = new URLSearchParams(window.location.search);
             const dataRaw = urlParams.get('data');
-            const listContainer = document.getElementById('services-list');
-            
-            let services = [];
+            const listContainer = document.getElementById('masters-list');
             
             if (dataRaw) {
                 try { 
-                    const parsedData = JSON.parse(decodeURIComponent(dataRaw)); 
-                    
-                    if (parsedData.services) {
-                        services = parsedData.services;
-                        busySlots = parsedData.busy || {}; 
-                        globalSlots = parsedData.slots || []; 
-                        specialSchedule = parsedData.specials || {}; // Получаем спец-дни
-                    } else {
-                        services = parsedData;
-                    }
-                } 
-                catch (e) { console.error(e); }
+                    // Декодируем JSON, который прислал бот
+                    allData = JSON.parse(decodeURIComponent(dataRaw));
+                    renderMasters();
+                } catch (e) { 
+                    console.error("Ошибка парсинга:", e); 
+                    listContainer.innerHTML = '<p style="text-align:center; color:red;">Ошибка обработки данных</p>';
+                }
+            } else {
+                listContainer.innerHTML = '<p style="text-align:center; opacity:0.5">Данные не получены. Попробуйте перезапустить бота.</p>';
             }
-            
-            if (services.length === 0) {
-                listContainer.innerHTML = '<p style="text-align:center; opacity:0.5">Нет доступных услуг</p>';
+        }
+        
+        // Запускаем при старте
+        loadData();
+
+        // --- 2. РЕНДЕР СПИСКА МАСТЕРОВ (Шаг 0) ---
+        function renderMasters() {
+            const list = document.getElementById('masters-list');
+            list.innerHTML = '';
+
+            if (!allData.masters || allData.masters.length === 0) {
+                list.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">Нет доступных мастеров</p>';
                 return;
             }
 
-            services.forEach(s => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.onclick = () => selectService(s.name, s.price);
-                card.innerHTML = `<h3>${s.name}</h3><p>${s.price} руб.</p>`;
-                listContainer.appendChild(card);
+            allData.masters.forEach(master => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                // Добавляем иконку для красоты
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <span style="font-size:24px; margin-right:10px;">👤</span>
+                        <h3>${master.name}</h3>
+                    </div>
+                    <span style="opacity:0.5;">❯</span>
+                `;
+                div.onclick = () => selectMaster(master);
+                list.appendChild(div);
             });
         }
-        loadServices();
 
-        function selectService(name, price) {
-            bookingData.service = name;
-            bookingData.price = price;
-            document.getElementById('step1').classList.remove('active');
-            document.getElementById('step2').classList.add('active');
-            document.getElementById('selected-service-name').innerText = name;
-            tg.BackButton.show();
+        // Логика выбора мастера
+        function selectMaster(master) {
+            selection.masterId = master.id;
+            document.getElementById('master-name-display').innerText = master.name;
+            renderServices(master);
+            goToStep(1); // Переход на следующий экран
         }
 
-        tg.BackButton.onClick(() => {
-            document.getElementById('step2').classList.remove('active');
-            document.getElementById('step1').classList.add('active');
-            tg.BackButton.hide();
-        });
+        // --- 3. РЕНДЕР УСЛУГ (Шаг 1) ---
+        function renderServices(master) {
+            const list = document.getElementById('services-list');
+            list.innerHTML = '';
 
+            if (!master.services || master.services.length === 0) {
+                list.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">У этого мастера пока нет услуг</p>';
+                return;
+            }
+
+            master.services.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.innerHTML = `
+                    <div>
+                        <h3>${s.name}</h3>
+                    </div>
+                    <div class="card-price">${s.price} ₽</div>
+                `;
+                div.onclick = () => selectService(s.name, s.price);
+                list.appendChild(div);
+            });
+        }
+
+        // Логика выбора услуги
+        function selectService(name, price) {
+            selection.service = name;
+            selection.price = price;
+            document.getElementById('selected-service-name').innerText = `${name} (${price} ₽)`;
+            
+            // Сбрасываем поле даты при новом выборе
+            resetCalendar();
+            
+            goToStep(2); // Переход к календарю
+        }
+
+        function resetCalendar() {
+            document.getElementById('date-picker').value = '';
+            const display = document.getElementById('date-display');
+            display.innerText = '📅 Нажмите, чтобы выбрать дату';
+            display.classList.remove('filled');
+            document.getElementById('time-slots').style.display = 'none';
+            document.getElementById('no-slots-msg').style.display = 'none';
+            document.getElementById('custom-main-btn').style.display = 'none';
+        }
+
+        // --- 4. КАЛЕНДАРЬ И ВРЕМЯ (Шаг 2) ---
+        
+        // Обработка выбора даты в инпуте
         function handleDateChange() {
             const dateInput = document.getElementById('date-picker');
             const displayDiv = document.getElementById('date-display');
@@ -228,6 +361,7 @@
             const dateVal = dateInput.value;
             
             if(dateVal) {
+                // Красивый формат даты
                 const dateObj = new Date(dateVal);
                 const options = { day: 'numeric', month: 'long', year: 'numeric' };
                 const dateStr = dateObj.toLocaleDateString('ru-RU', options);
@@ -235,76 +369,111 @@
                 displayDiv.innerText = "🗓 " + dateStr;
                 displayDiv.classList.add('filled'); 
                 
+                // Запускаем расчет времени
                 renderTimeSlots(dateVal); 
             }
         }
 
-        // --- ГЛАВНАЯ ЛОГИКА: РИСУЕМ КНОПКИ ---
+        // Главная логика: Генерация кнопок времени
         function renderTimeSlots(dateVal) {
             const container = document.getElementById('time-slots');
             const msgDiv = document.getElementById('no-slots-msg');
+            const btn = document.getElementById('custom-main-btn');
             
+            // Очистка
             container.innerHTML = ''; 
             container.style.display = 'none';
             msgDiv.style.display = 'none';
+            btn.style.display = 'none';
             
-            bookingData.date = dateVal;
+            selection.date = dateVal;
 
-            // 1. ОПРЕДЕЛЯЕМ, КАКИЕ СЛОТЫ ПОКАЗАТЬ
-            let slotsToShow = globalSlots; // По умолчанию - общие
+            // Находим данные выбранного мастера в базе
+            const currentMaster = allData.masters.find(m => m.id === selection.masterId);
+            
+            if (!currentMaster) return;
 
-            // Если для этой даты есть спец-настройка в базе
-            if (specialSchedule.hasOwnProperty(dateVal)) {
-                slotsToShow = specialSchedule[dateVal]; // Берем спец-часы
+            // --- ПРОВЕРКА СПЕЦ-ГРАФИКА ---
+            // По умолчанию берем обычные слоты
+            let slotsToShow = currentMaster.slots || []; 
+            
+            // Если для выбранной даты есть запись в specials (исключения)
+            if (currentMaster.specials && currentMaster.specials.hasOwnProperty(dateVal)) {
+                // Используем спец-график (даже если он пустой = выходной)
+                slotsToShow = currentMaster.specials[dateVal];
             }
 
-            // Если список пуст (например, выходной), показываем сообщение
+            // Если слотов нет совсем -> Выходной
             if (slotsToShow.length === 0) {
                 msgDiv.style.display = 'block';
-                document.getElementById('custom-main-btn').style.display = 'none';
                 return;
             }
 
-            // Если слоты есть - рисуем
+            // --- ОТРИСОВКА КНОПОК ---
             container.style.display = 'grid';
-            container.style.opacity = '1';
             
-            const busyTimesForDate = busySlots[dateVal] || [];
+            // Получаем список занятого времени для этого мастера и этой даты
+            const busyTimes = (currentMaster.busy && currentMaster.busy[dateVal]) ? currentMaster.busy[dateVal] : [];
 
             slotsToShow.forEach(time => {
                 const slot = document.createElement('div');
                 slot.className = 'time-slot';
                 slot.innerText = time;
                 
-                if (busyTimesForDate.includes(time)) {
+                // Проверяем, не занято ли время
+                if (busyTimes.includes(time)) {
                     slot.classList.add('disabled');
                 } else {
+                    // Добавляем клик
                     slot.onclick = () => selectTime(time, slot);
                 }
                 
                 container.appendChild(slot);
             });
-
-            document.getElementById('custom-main-btn').style.display = 'none';
         }
 
+        // Выбор конкретного времени
         function selectTime(time, element) {
             if (element.classList.contains('disabled')) return;
 
-            bookingData.time = time;
+            selection.time = time;
+            
+            // Подсветка кнопки
             document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
             
+            // Показываем кнопку подтверждения
             const btn = document.getElementById('custom-main-btn');
             btn.style.display = 'block';
-            btn.innerText = `Подтвердить запись`;
+            btn.innerText = `Подтвердить: ${selection.date} в ${time}`;
         }
 
+        // --- НАВИГАЦИЯ ---
+        function goToStep(stepNumber) {
+            // Скрываем все экраны
+            document.querySelectorAll('.container').forEach(el => el.classList.remove('active'));
+            // Показываем нужный
+            document.getElementById('step' + stepNumber).classList.add('active');
+            
+            // Управление кнопкой "Назад" в самом Телеграме (опционально)
+            if (stepNumber === 0) {
+                tg.BackButton.hide();
+            } else {
+                tg.BackButton.show();
+                tg.BackButton.onClick(() => {
+                    goToStep(stepNumber - 1);
+                });
+            }
+        }
+
+        // --- ОТПРАВКА ДАННЫХ БОТУ ---
         function sendData() {
             const btn = document.getElementById('custom-main-btn');
-            btn.innerText = "⏳ Отправка...";
+            btn.innerText = "⏳ Оформляем...";
             btn.style.opacity = "0.7";
-            tg.sendData(JSON.stringify(bookingData)); 
+            
+            // Отправляем JSON с данными обратно в бот
+            tg.sendData(JSON.stringify(selection)); 
         }
     </script>
 </body>
