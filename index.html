@@ -95,28 +95,24 @@
             box-shadow: none;
         }
 
-        /* Аватар мастера (с поддержкой фото) */
+        /* Аватар мастера (авто-генерация) */
         .avatar {
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            /* Если нет фото, будет градиент */
             background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
-            /* Если есть фото, оно перекроет градиент */
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            
             display: flex;
             align-items: center;
             justify-content: center;
-            
             font-size: 20px;
             font-weight: 700;
             color: #fff;
             margin-right: 15px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            flex-shrink: 0; /* Чтобы не сжималась на узких экранах */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            flex-shrink: 0; 
         }
         
         .card-content { flex: 1; }
@@ -269,7 +265,7 @@
                 <span>🗓 Выберите дату</span>
                 <span style="opacity:0.3">▼</span>
             </div>
-            <input type="date" id="date-picker" onchange="handleDateChange()">
+            <input type="date" id="date-picker" onchange="handleDateChange()" onclick="try{this.showPicker()}catch(e){}">
         </div>
         
         <div class="time-slots" id="time-slots" style="display:none;"></div>
@@ -333,12 +329,9 @@
                 // ЛОГИКА АВАТАРКИ
                 let avatarHtml = '';
                 
-                // Если есть ссылка на фото (присланная ботом)
                 if (master.photo) {
-                    // Используем background-image для отображения фото
                     avatarHtml = `<div class="avatar" style="background-image: url('${master.photo}');"></div>`;
                 } else {
-                    // Иначе рисуем букву на цветном фоне
                     const firstLetter = master.name.charAt(0).toUpperCase();
                     const bg = gradients[index % gradients.length];
                     avatarHtml = `<div class="avatar" style="background:${bg}">${firstLetter}</div>`;
