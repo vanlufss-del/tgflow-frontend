@@ -95,20 +95,28 @@
             box-shadow: none;
         }
 
-        /* Аватар мастера (авто-генерация) */
+        /* Аватар мастера (с поддержкой фото) */
         .avatar {
             width: 48px;
             height: 48px;
             border-radius: 50%;
+            /* Если нет фото, будет градиент */
             background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            /* Если есть фото, оно перекроет градиент */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            
             display: flex;
             align-items: center;
             justify-content: center;
+            
             font-size: 20px;
             font-weight: 700;
             color: #fff;
             margin-right: 15px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            flex-shrink: 0; /* Чтобы не сжималась на узких экранах */
         }
         
         .card-content { flex: 1; }
@@ -283,7 +291,7 @@
         let allData = { masters: [] };
         let selection = { masterId: null, service: null, price: null, date: null, time: null };
 
-        // Генерация цвета для аватарки
+        // Генерация цвета для аватарки (если нет фото)
         const gradients = [
             "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
             "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
@@ -322,13 +330,23 @@
                 const div = document.createElement('div');
                 div.className = 'card';
                 
-                // Берем первую букву имени для аватарки
-                const firstLetter = master.name.charAt(0).toUpperCase();
-                const bg = gradients[index % gradients.length];
+                // ЛОГИКА АВАТАРКИ
+                let avatarHtml = '';
+                
+                // Если есть ссылка на фото (присланная ботом)
+                if (master.photo) {
+                    // Используем background-image для отображения фото
+                    avatarHtml = `<div class="avatar" style="background-image: url('${master.photo}');"></div>`;
+                } else {
+                    // Иначе рисуем букву на цветном фоне
+                    const firstLetter = master.name.charAt(0).toUpperCase();
+                    const bg = gradients[index % gradients.length];
+                    avatarHtml = `<div class="avatar" style="background:${bg}">${firstLetter}</div>`;
+                }
 
                 div.innerHTML = `
                     <div style="display:flex; align-items:center;">
-                        <div class="avatar" style="background:${bg}">${firstLetter}</div>
+                        ${avatarHtml}
                         <div class="card-content">
                             <h3>${master.name}</h3>
                             <div class="card-desc">Доступно услуг: ${master.services.length}</div>
@@ -460,7 +478,6 @@
             bar.style.display = 'block';
             btn.innerText = `Записаться на ${time}`;
             
-            // Вибрация при выборе (Taptic Engine)
             if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
 
@@ -468,7 +485,6 @@
             document.querySelectorAll('.container').forEach(el => el.classList.remove('active'));
             document.getElementById('step' + stepNumber).classList.add('active');
             
-            // Прячем нижний бар при переходе назад
             if (stepNumber < 2) {
                 document.getElementById('bottom-bar').style.display = 'none';
             }
