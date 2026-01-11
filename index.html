@@ -115,7 +115,6 @@
         }
 
         /* --- СПЕЦИАЛЬНЫЙ СТИЛЬ ДЛЯ ПК (Telegram Desktop) --- */
-        /* Если есть мышка, показываем обычный календарь, а фейковый прячем */
         @media (hover: hover) and (pointer: fine) {
             .date-fake-display { display: none; }
             #date-picker {
@@ -156,15 +155,6 @@
             color: var(--tg-theme-button-text-color, #ffffff); 
         }
         
-        /* Заблокированное время */
-        .time-slot.disabled {
-            opacity: 0.3; 
-            background-color: #ccc; 
-            text-decoration: line-through; 
-            pointer-events: none; 
-            cursor: not-allowed;
-        }
-
         /* Сообщение "Нет записи" */
         .no-slots-msg {
             text-align: center;
@@ -225,7 +215,7 @@
         <div class="time-slots" id="time-slots" style="display:none;"></div>
         
         <div id="no-slots-msg" class="no-slots-msg" style="display:none;">
-            В этот день записи нет (Выходной)
+            В этот день записи нет (или всё занято)
         </div>
 
         <button id="custom-main-btn" onclick="sendData()">ПОДТВЕРДИТЬ ЗАПИСЬ</button>
@@ -374,7 +364,7 @@
             }
         }
 
-        // Главная логика: Генерация кнопок времени
+        // --- ГЛАВНАЯ ЛОГИКА: ОТОБРАЖЕНИЕ ТОЛЬКО СВОБОДНЫХ СЛОТОВ ---
         function renderTimeSlots(dateVal) {
             const container = document.getElementById('time-slots');
             const msgDiv = document.getElementById('no-slots-msg');
@@ -393,18 +383,25 @@
             
             if (!currentMaster) return;
 
-            // --- ПРОВЕРКА СПЕЦ-ГРАФИКА ---
-            // По умолчанию берем обычные слоты
+            // 1. Получаем все слоты (Обычные или Спец)
             let slotsToShow = currentMaster.slots || []; 
             
             // Если для выбранной даты есть запись в specials (исключения)
             if (currentMaster.specials && currentMaster.specials.hasOwnProperty(dateVal)) {
-                // Используем спец-график (даже если он пустой = выходной)
                 slotsToShow = currentMaster.specials[dateVal];
             }
 
-            // Если слотов нет совсем -> Выходной
-            if (slotsToShow.length === 0) {
+            // 2. Получаем список ЗАНЯТОГО времени
+            const busyTimes = (currentMaster.busy && currentMaster.busy[dateVal]) ? currentMaster.busy[dateVal] : [];
+
+            // 3. ФИЛЬТРАЦИЯ: Оставляем только те слоты, которых НЕТ в списке занятых
+            // Используем trim(), чтобы "10:00 " (с пробелом) считалось равным "10:00"
+            const freeSlots = slotsToShow.filter(time => {
+                return !busyTimes.some(busy => busy.trim() === time.trim());
+            });
+
+            // Если после фильтрации не осталось свободных слотов -> Показываем сообщение
+            if (freeSlots.length === 0) {
                 msgDiv.style.display = 'block';
                 return;
             }
@@ -412,21 +409,14 @@
             // --- ОТРИСОВКА КНОПОК ---
             container.style.display = 'grid';
             
-            // Получаем список занятого времени для этого мастера и этой даты
-            const busyTimes = (currentMaster.busy && currentMaster.busy[dateVal]) ? currentMaster.busy[dateVal] : [];
-
-            slotsToShow.forEach(time => {
+            // Рисуем ТОЛЬКО свободные слоты
+            freeSlots.forEach(time => {
                 const slot = document.createElement('div');
                 slot.className = 'time-slot';
                 slot.innerText = time;
                 
-                // Проверяем, не занято ли время
-                if (busyTimes.includes(time)) {
-                    slot.classList.add('disabled');
-                } else {
-                    // Добавляем клик
-                    slot.onclick = () => selectTime(time, slot);
-                }
+                // Сразу вешаем обработчик клика, так как занятых тут нет
+                slot.onclick = () => selectTime(time, slot);
                 
                 container.appendChild(slot);
             });
@@ -434,8 +424,7 @@
 
         // Выбор конкретного времени
         function selectTime(time, element) {
-            if (element.classList.contains('disabled')) return;
-
+            // Больше не нужно проверять classList.contains('disabled'), т.к. таких кнопок нет
             selection.time = time;
             
             // Подсветка кнопки
