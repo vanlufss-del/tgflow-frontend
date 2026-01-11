@@ -112,6 +112,14 @@
             cursor: not-allowed;
         }
 
+        /* Сообщение, если нет слотов (выходной) */
+        .no-slots-msg {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--tg-theme-hint-color, #888);
+            font-style: italic;
+        }
+
         #custom-main-btn {
             display: none; width: 100%; padding: 16px; margin-top: 25px;
             background-color: var(--tg-theme-button-color, #3390ec); 
@@ -145,6 +153,7 @@
         </div>
         
         <div class="time-slots" id="time-slots" style="display:none;"></div>
+        <div id="no-slots-msg" class="no-slots-msg" style="display:none;">В этот день записи нет (Выходной)</div>
 
         <button id="custom-main-btn" onclick="sendData()">ЗАПИСАТЬСЯ</button>
     </div>
@@ -156,7 +165,8 @@
 
         let bookingData = { service: null, price: null, date: null, time: null };
         let busySlots = {}; 
-        let availableSlots = []; // СЮДА ПРИДЕТ СПИСОК ВРЕМЕНИ ОТ БОТА
+        let globalSlots = []; // Общее расписание
+        let specialSchedule = {}; // Исключения (спец-дни)
 
         function loadServices() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -172,7 +182,8 @@
                     if (parsedData.services) {
                         services = parsedData.services;
                         busySlots = parsedData.busy || {}; 
-                        availableSlots = parsedData.slots || []; // Получаем часы от мастера
+                        globalSlots = parsedData.slots || []; 
+                        specialSchedule = parsedData.specials || {}; // Получаем спец-дни
                     } else {
                         services = parsedData;
                     }
@@ -224,39 +235,56 @@
                 displayDiv.innerText = "🗓 " + dateStr;
                 displayDiv.classList.add('filled'); 
                 
-                renderTimeSlots(dateVal); // ЗАПУСКАЕМ ГЕНЕРАЦИЮ КНОПОК
+                renderTimeSlots(dateVal); 
             }
         }
 
-        // --- НОВАЯ ФУНКЦИЯ: РИСУЕМ КНОПКИ ВРЕМЕНИ ДИНАМИЧЕСКИ ---
+        // --- ГЛАВНАЯ ЛОГИКА: РИСУЕМ КНОПКИ ---
         function renderTimeSlots(dateVal) {
             const container = document.getElementById('time-slots');
-            container.innerHTML = ''; // Очищаем старые кнопки
-            container.style.display = 'grid';
-            container.style.opacity = '1';
+            const msgDiv = document.getElementById('no-slots-msg');
+            
+            container.innerHTML = ''; 
+            container.style.display = 'none';
+            msgDiv.style.display = 'none';
             
             bookingData.date = dateVal;
 
+            // 1. ОПРЕДЕЛЯЕМ, КАКИЕ СЛОТЫ ПОКАЗАТЬ
+            let slotsToShow = globalSlots; // По умолчанию - общие
+
+            // Если для этой даты есть спец-настройка в базе
+            if (specialSchedule.hasOwnProperty(dateVal)) {
+                slotsToShow = specialSchedule[dateVal]; // Берем спец-часы
+            }
+
+            // Если список пуст (например, выходной), показываем сообщение
+            if (slotsToShow.length === 0) {
+                msgDiv.style.display = 'block';
+                document.getElementById('custom-main-btn').style.display = 'none';
+                return;
+            }
+
+            // Если слоты есть - рисуем
+            container.style.display = 'grid';
+            container.style.opacity = '1';
+            
             const busyTimesForDate = busySlots[dateVal] || [];
 
-            // ИСПОЛЬЗУЕМ СПИСОК ЧАСОВ ОТ БОТА (availableSlots)
-            availableSlots.forEach(time => {
+            slotsToShow.forEach(time => {
                 const slot = document.createElement('div');
                 slot.className = 'time-slot';
                 slot.innerText = time;
                 
-                // Проверяем занятость
                 if (busyTimesForDate.includes(time)) {
                     slot.classList.add('disabled');
                 } else {
-                    // Вешаем клик только если свободно
                     slot.onclick = () => selectTime(time, slot);
                 }
                 
                 container.appendChild(slot);
             });
 
-            // Прячем кнопку записи, если она была активна
             document.getElementById('custom-main-btn').style.display = 'none';
         }
 
