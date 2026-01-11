@@ -7,207 +7,259 @@
     <title>Онлайн Запись</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* --- ОСНОВНЫЕ СТИЛИ --- */
+        /* --- ПЕРЕМЕННЫЕ И СБРОС --- */
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #f5f5f7); /* Чуть темнее для контраста карт */
+            --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
+            --text-main: var(--tg-theme-text-color, #000000);
+            --text-hint: var(--tg-theme-hint-color, #8e8e93);
+            --accent: var(--tg-theme-button-color, #007aff);
+            --accent-text: var(--tg-theme-button-text-color, #ffffff);
+            --danger: #ff3b30;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --radius: 16px;
+        }
+
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--tg-theme-bg-color, #fff); 
-            color: var(--tg-theme-text-color, #000); 
-            padding: 20px; 
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            padding: 0; 
             margin: 0;
             -webkit-tap-highlight-color: transparent;
+            padding-bottom: 90px; /* Место под нижнюю кнопку */
         }
-        
-        /* Анимация появления экранов */
+
+        h2 { 
+            margin: 0 0 15px 0; 
+            font-size: 28px; 
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+            padding: 0 4px;
+        }
+
+        .subtitle {
+            font-size: 15px;
+            color: var(--text-hint);
+            margin-bottom: 20px;
+            margin-top: -10px;
+            padding: 0 4px;
+        }
+
+        /* --- КОНТЕЙНЕРЫ И АНИМАЦИЯ --- */
         .container { 
             display: none; 
-            animation: fadeIn 0.3s ease-in-out; 
+            padding: 20px;
+            max-width: 600px; /* Ограничение для ПК */
+            margin: 0 auto;
         }
         .container.active { 
             display: block; 
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes fadeIn { 
-            from { opacity: 0; transform: translateY(10px); } 
-            to { opacity: 1; transform: translateY(0); } 
-        }
-        
-        h2 { 
-            margin-top: 0; 
-            margin-bottom: 20px; 
-            font-size: 22px; 
-            font-weight: 700; 
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(10px) scale(0.98); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
         }
 
-        /* Кнопка НАЗАД */
-        .back-btn {
-            color: var(--tg-theme-link-color, #3390ec);
-            font-size: 16px;
+        /* --- НАВИГАЦИЯ --- */
+        .header-nav {
+            display: flex;
+            align-items: center;
             margin-bottom: 15px;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
+            color: var(--accent);
             font-weight: 500;
+            font-size: 16px;
+            transition: opacity 0.2s;
         }
-        .back-btn:active { opacity: 0.6; }
-        
-        /* КАРТОЧКИ (Мастера и Услуги) */
+        .header-nav:active { opacity: 0.6; }
+        .header-nav svg { margin-right: 6px; width: 20px; height: 20px; }
+
+        /* --- КАРТОЧКИ --- */
         .card { 
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
+            background: var(--card-bg); 
             padding: 16px; 
-            border-radius: 14px; 
+            border-radius: var(--radius); 
             margin-bottom: 12px; 
             cursor: pointer; 
-            border: 2px solid transparent; 
-            transition: transform 0.1s, background-color 0.1s;
+            box-shadow: var(--shadow);
+            transition: transform 0.1s, box-shadow 0.1s;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border: 1px solid transparent;
         }
         .card:active { 
-            transform: scale(0.98); 
-            background-color: var(--tg-theme-hint-color, #e0e0e0);
+            transform: scale(0.97); 
+            box-shadow: none;
         }
-        .card h3 { margin: 0; font-size: 17px; font-weight: 600; }
-        .card p { margin: 5px 0 0 0; opacity: 0.7; font-size: 14px; }
-        .card-price { font-weight: 600; color: var(--tg-theme-button-color, #3390ec); }
 
-        /* --- КАЛЕНДАРЬ (FIX ДЛЯ iPHONE) --- */
+        /* Аватар мастера (авто-генерация) */
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-right: 15px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .card-content { flex: 1; }
+        .card h3 { margin: 0; font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+        .card-desc { font-size: 13px; color: var(--text-hint); }
+        .card-price { 
+            font-weight: 700; 
+            color: var(--accent); 
+            background: rgba(0,122,255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .arrow-icon { color: var(--text-hint); opacity: 0.3; }
+
+        /* --- КАЛЕНДАРЬ --- */
         .date-input-wrapper {
             position: relative; 
             width: 100%; 
-            height: 55px; 
-            margin-top: 15px;
+            height: 56px; 
+            margin-top: 10px;
         }
-
-        /* Видимая часть (Красивая кнопка) */
         .date-fake-display {
-            width: 100%; 
-            height: 100%; 
-            background-color: var(--tg-theme-secondary-bg-color, #efeff3);
-            border-radius: 12px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 0 15px; 
-            box-sizing: border-box; 
-            color: var(--tg-theme-text-color, #000); 
-            font-size: 17px; 
-            border: 1px solid transparent;
-            font-weight: 500;
+            width: 100%; height: 100%; 
+            background-color: var(--card-bg);
+            border-radius: var(--radius); 
+            display: flex; align-items: center; justify-content: space-between; 
+            padding: 0 20px; box-sizing: border-box; 
+            font-size: 17px; font-weight: 500;
+            box-shadow: var(--shadow);
+            transition: all 0.2s;
         }
-        
-        /* Когда дата выбрана */
         .date-fake-display.filled {
-            border-color: var(--tg-theme-button-color, #3390ec);
-            font-weight: 600;
-            color: var(--tg-theme-button-color, #3390ec);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+            background-color: rgba(0,122,255, 0.03);
         }
-
-        /* Невидимый настоящий инпут */
         #date-picker {
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            opacity: 0; 
-            cursor: pointer; 
-            z-index: 10; 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            opacity: 0; cursor: pointer; z-index: 10; 
         }
 
-        /* --- СПЕЦИАЛЬНЫЙ СТИЛЬ ДЛЯ ПК (Telegram Desktop) --- */
-        @media (hover: hover) and (pointer: fine) {
-            .date-fake-display { display: none; }
-            #date-picker {
-                position: relative; 
-                opacity: 1; 
-                width: 100%;
-                background-color: var(--tg-theme-secondary-bg-color, #efeff3);
-                color: var(--tg-theme-text-color, #000);
-                padding: 12px; 
-                border-radius: 12px; 
-                border: 1px solid var(--tg-theme-hint-color, #ccc);
-                font-size: 16px;
-                box-sizing: border-box;
-                z-index: 1;
-            }
-        }
-
-        /* СЕТКА ВРЕМЕНИ */
+        /* --- СЛОТЫ ВРЕМЕНИ (Капсулы) --- */
         .time-slots { 
             display: grid; 
-            grid-template-columns: repeat(3, 1fr); /* 3 колонки */
+            grid-template-columns: repeat(4, 1fr); /* 4 в ряд */
             gap: 10px; 
             margin-top: 25px; 
         }
-        
         .time-slot { 
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0); 
-            padding: 12px; 
+            background: var(--card-bg); 
+            padding: 12px 5px; 
             text-align: center; 
-            border-radius: 10px; 
+            border-radius: 12px; 
             cursor: pointer; 
-            font-weight: 500;
-            transition: background-color 0.1s;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            border: 1px solid transparent;
+            transition: all 0.2s;
         }
-        
         .time-slot.selected { 
-            background-color: var(--tg-theme-button-color, #3390ec); 
-            color: var(--tg-theme-button-text-color, #ffffff); 
+            background-color: var(--accent); 
+            color: var(--accent-text); 
+            box-shadow: 0 4px 10px rgba(0,122,255, 0.3);
+            transform: translateY(-2px);
         }
-        
-        /* Сообщение "Нет записи" */
         .no-slots-msg {
-            text-align: center;
-            margin-top: 30px;
-            color: var(--tg-theme-hint-color, #888);
-            font-style: italic;
-            font-size: 16px;
+            text-align: center; margin-top: 40px; color: var(--text-hint);
+            font-size: 16px; background: var(--card-bg); padding: 20px; 
+            border-radius: var(--radius);
         }
 
-        /* ГЛАВНАЯ КНОПКА ПОДТВЕРЖДЕНИЯ */
+        /* --- НИЖНЯЯ ПАНЕЛЬ С КНОПКОЙ --- */
+        .bottom-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--bg-color);
+            padding: 15px 20px 30px 20px; /* Учет safe-area на iPhone */
+            border-top: 1px solid rgba(0,0,0,0.05);
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.8); /* Полупрозрачность */
+            display: none;
+            z-index: 100;
+            animation: slideUp 0.3s;
+        }
+        /* Темная тема для бара */
+        @media (prefers-color-scheme: dark) {
+            .bottom-bar { background: rgba(30,30,30,0.8); }
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
         #custom-main-btn {
-            display: none; 
             width: 100%; 
             padding: 16px; 
-            margin-top: 30px;
-            background-color: var(--tg-theme-button-color, #3390ec); 
-            color: var(--tg-theme-button-text-color, #ffffff); 
+            background-color: var(--accent); 
+            color: var(--accent-text); 
             border: none;
-            border-radius: 12px; 
+            border-radius: 14px; 
             font-size: 17px; 
             font-weight: 600; 
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,122,255, 0.3);
+            transition: transform 0.1s;
         }
-        #custom-main-btn:active { opacity: 0.8; transform: translateY(1px); }
+        #custom-main-btn:active { transform: scale(0.98); }
         
-        .loading-text { text-align: center; margin-top: 50px; opacity: 0.5; }
+        .loading-text { 
+            text-align: center; margin-top: 50px; 
+            color: var(--text-hint); font-weight: 500; 
+        }
+        
+        /* Медиа запрос для больших экранов */
+        @media (min-width: 500px) {
+            .time-slots { grid-template-columns: repeat(5, 1fr); }
+        }
     </style>
 </head>
 <body>
 
     <div id="step0" class="container active">
         <h2>Выберите специалиста</h2>
+        <div class="subtitle">Наши лучшие мастера готовы принять вас</div>
         <div id="masters-list">
             <div class="loading-text">Загрузка данных...</div>
         </div>
     </div>
 
     <div id="step1" class="container">
-        <div class="back-btn" onclick="goToStep(0)">⬅ Назад к специалистам</div>
-        <h2>Услуги: <span id="master-name-display" style="color: var(--tg-theme-button-color);"></span></h2>
+        <div class="header-nav" onclick="goToStep(0)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            Назад к мастерам
+        </div>
+        <h2>Услуги</h2>
+        <div class="subtitle">Мастер: <span id="master-name-display" style="color: var(--accent); font-weight:600;"></span></div>
         <div id="services-list"></div>
     </div>
 
     <div id="step2" class="container">
-        <div class="back-btn" onclick="goToStep(1)">⬅ Назад к услугам</div>
+        <div class="header-nav" onclick="goToStep(1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            Назад к услугам
+        </div>
         <h2>Дата и Время</h2> 
-        <p style="opacity: 0.7; margin-bottom: 5px;">Выбрана услуга:</p>
-        <div style="font-size: 18px; font-weight: 600; margin-bottom: 20px;" id="selected-service-name"></div>
+        <div class="subtitle" id="selected-service-name"></div>
         
         <div class="date-input-wrapper">
             <div id="date-display" class="date-fake-display">
-                📅 Нажмите, чтобы выбрать дату
+                <span>🗓 Выберите дату</span>
+                <span style="opacity:0.3">▼</span>
             </div>
             <input type="date" id="date-picker" onchange="handleDateChange()">
         </div>
@@ -215,10 +267,12 @@
         <div class="time-slots" id="time-slots" style="display:none;"></div>
         
         <div id="no-slots-msg" class="no-slots-msg" style="display:none;">
-            В этот день записи нет (или всё занято)
+            😔 Нет свободного времени на этот день
         </div>
+    </div>
 
-        <button id="custom-main-btn" onclick="sendData()">ПОДТВЕРДИТЬ ЗАПИСЬ</button>
+    <div class="bottom-bar" id="bottom-bar">
+        <button id="custom-main-btn" onclick="sendData()">Подтвердить запись</button>
     </div>
 
     <script>
@@ -226,19 +280,17 @@
         tg.expand();
         tg.MainButton.hide(); 
 
-        // Хранилище всех данных
         let allData = { masters: [] };
-        
-        // Объект текущего выбора
-        let selection = {
-            masterId: null,
-            service: null,
-            price: null,
-            date: null,
-            time: null
-        };
+        let selection = { masterId: null, service: null, price: null, date: null, time: null };
 
-        // --- 1. ЗАГРУЗКА И ПАРСИНГ ДАННЫХ ---
+        // Генерация цвета для аватарки
+        const gradients = [
+            "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+            "linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)",
+            "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)",
+            "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+        ];
+
         function loadData() {
             const urlParams = new URLSearchParams(window.location.search);
             const dataRaw = urlParams.get('data');
@@ -246,62 +298,62 @@
             
             if (dataRaw) {
                 try { 
-                    // Декодируем JSON, который прислал бот
                     allData = JSON.parse(decodeURIComponent(dataRaw));
                     renderMasters();
                 } catch (e) { 
-                    console.error("Ошибка парсинга:", e); 
-                    listContainer.innerHTML = '<p style="text-align:center; color:red;">Ошибка обработки данных</p>';
+                    listContainer.innerHTML = '<p style="text-align:center;">Ошибка данных</p>';
                 }
             } else {
-                listContainer.innerHTML = '<p style="text-align:center; opacity:0.5">Данные не получены. Попробуйте перезапустить бота.</p>';
+                listContainer.innerHTML = '<p style="text-align:center;">Данные не получены</p>';
             }
         }
-        
-        // Запускаем при старте
         loadData();
 
-        // --- 2. РЕНДЕР СПИСКА МАСТЕРОВ (Шаг 0) ---
         function renderMasters() {
             const list = document.getElementById('masters-list');
             list.innerHTML = '';
 
             if (!allData.masters || allData.masters.length === 0) {
-                list.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">Нет доступных мастеров</p>';
+                list.innerHTML = '<p style="text-align:center;">Нет доступных мастеров</p>';
                 return;
             }
 
-            allData.masters.forEach(master => {
+            allData.masters.forEach((master, index) => {
                 const div = document.createElement('div');
                 div.className = 'card';
-                // Добавляем иконку для красоты
+                
+                // Берем первую букву имени для аватарки
+                const firstLetter = master.name.charAt(0).toUpperCase();
+                const bg = gradients[index % gradients.length];
+
                 div.innerHTML = `
                     <div style="display:flex; align-items:center;">
-                        <span style="font-size:24px; margin-right:10px;">👤</span>
-                        <h3>${master.name}</h3>
+                        <div class="avatar" style="background:${bg}">${firstLetter}</div>
+                        <div class="card-content">
+                            <h3>${master.name}</h3>
+                            <div class="card-desc">Доступно услуг: ${master.services.length}</div>
+                        </div>
                     </div>
-                    <span style="opacity:0.5;">❯</span>
+                    <div class="arrow-icon">❯</div>
                 `;
                 div.onclick = () => selectMaster(master);
                 list.appendChild(div);
             });
         }
 
-        // Логика выбора мастера
         function selectMaster(master) {
             selection.masterId = master.id;
             document.getElementById('master-name-display').innerText = master.name;
             renderServices(master);
-            goToStep(1); // Переход на следующий экран
+            goToStep(1); 
         }
 
-        // --- 3. РЕНДЕР УСЛУГ (Шаг 1) ---
         function renderServices(master) {
             const list = document.getElementById('services-list');
             list.innerHTML = '';
 
             if (!master.services || master.services.length === 0) {
-                list.innerHTML = '<p style="text-align:center; opacity:0.5; margin-top:20px;">У этого мастера пока нет услуг</p>';
+                list.innerHTML = '<p style="text-align:center;">Нет услуг</p>';
                 return;
             }
 
@@ -309,7 +361,7 @@
                 const div = document.createElement('div');
                 div.className = 'card';
                 div.innerHTML = `
-                    <div>
+                    <div class="card-content">
                         <h3>${s.name}</h3>
                     </div>
                     <div class="card-price">${s.price} ₽</div>
@@ -319,149 +371,120 @@
             });
         }
 
-        // Логика выбора услуги
         function selectService(name, price) {
             selection.service = name;
             selection.price = price;
-            document.getElementById('selected-service-name').innerText = `${name} (${price} ₽)`;
-            
-            // Сбрасываем поле даты при новом выборе
+            document.getElementById('selected-service-name').innerText = `Выбрано: ${name} (${price} ₽)`;
             resetCalendar();
-            
-            goToStep(2); // Переход к календарю
+            goToStep(2); 
         }
 
         function resetCalendar() {
             document.getElementById('date-picker').value = '';
             const display = document.getElementById('date-display');
-            display.innerText = '📅 Нажмите, чтобы выбрать дату';
+            display.innerHTML = '<span>🗓 Выберите дату</span><span style="opacity:0.3">▼</span>';
             display.classList.remove('filled');
             document.getElementById('time-slots').style.display = 'none';
             document.getElementById('no-slots-msg').style.display = 'none';
-            document.getElementById('custom-main-btn').style.display = 'none';
+            document.getElementById('bottom-bar').style.display = 'none';
         }
 
-        // --- 4. КАЛЕНДАРЬ И ВРЕМЯ (Шаг 2) ---
-        
-        // Обработка выбора даты в инпуте
         function handleDateChange() {
             const dateInput = document.getElementById('date-picker');
             const displayDiv = document.getElementById('date-display');
-            
             const dateVal = dateInput.value;
             
             if(dateVal) {
-                // Красивый формат даты
                 const dateObj = new Date(dateVal);
-                const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                const options = { day: 'numeric', month: 'long', weekday: 'short' };
                 const dateStr = dateObj.toLocaleDateString('ru-RU', options);
                 
-                displayDiv.innerText = "🗓 " + dateStr;
+                displayDiv.innerHTML = `<span style="font-weight:600; color:var(--accent)">${dateStr}</span>`;
                 displayDiv.classList.add('filled'); 
-                
-                // Запускаем расчет времени
                 renderTimeSlots(dateVal); 
             }
         }
 
-        // --- ГЛАВНАЯ ЛОГИКА: ОТОБРАЖЕНИЕ ТОЛЬКО СВОБОДНЫХ СЛОТОВ ---
         function renderTimeSlots(dateVal) {
             const container = document.getElementById('time-slots');
             const msgDiv = document.getElementById('no-slots-msg');
-            const btn = document.getElementById('custom-main-btn');
+            const bar = document.getElementById('bottom-bar');
             
-            // Очистка
             container.innerHTML = ''; 
             container.style.display = 'none';
             msgDiv.style.display = 'none';
-            btn.style.display = 'none';
+            bar.style.display = 'none';
             
             selection.date = dateVal;
 
-            // Находим данные выбранного мастера в базе
             const currentMaster = allData.masters.find(m => m.id === selection.masterId);
-            
             if (!currentMaster) return;
 
-            // 1. Получаем все слоты (Обычные или Спец)
             let slotsToShow = currentMaster.slots || []; 
-            
-            // Если для выбранной даты есть запись в specials (исключения)
             if (currentMaster.specials && currentMaster.specials.hasOwnProperty(dateVal)) {
                 slotsToShow = currentMaster.specials[dateVal];
             }
 
-            // 2. Получаем список ЗАНЯТОГО времени
             const busyTimes = (currentMaster.busy && currentMaster.busy[dateVal]) ? currentMaster.busy[dateVal] : [];
 
-            // 3. ФИЛЬТРАЦИЯ: Оставляем только те слоты, которых НЕТ в списке занятых
-            // Используем trim(), чтобы "10:00 " (с пробелом) считалось равным "10:00"
+            // ФИЛЬТРАЦИЯ ЗАНЯТЫХ
             const freeSlots = slotsToShow.filter(time => {
                 return !busyTimes.some(busy => busy.trim() === time.trim());
             });
 
-            // Если после фильтрации не осталось свободных слотов -> Показываем сообщение
             if (freeSlots.length === 0) {
                 msgDiv.style.display = 'block';
                 return;
             }
 
-            // --- ОТРИСОВКА КНОПОК ---
             container.style.display = 'grid';
             
-            // Рисуем ТОЛЬКО свободные слоты
             freeSlots.forEach(time => {
                 const slot = document.createElement('div');
                 slot.className = 'time-slot';
                 slot.innerText = time;
-                
-                // Сразу вешаем обработчик клика, так как занятых тут нет
                 slot.onclick = () => selectTime(time, slot);
-                
                 container.appendChild(slot);
             });
         }
 
-        // Выбор конкретного времени
         function selectTime(time, element) {
-            // Больше не нужно проверять classList.contains('disabled'), т.к. таких кнопок нет
             selection.time = time;
             
-            // Подсветка кнопки
             document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
             element.classList.add('selected');
             
-            // Показываем кнопку подтверждения
+            const bar = document.getElementById('bottom-bar');
             const btn = document.getElementById('custom-main-btn');
-            btn.style.display = 'block';
-            btn.innerText = `Подтвердить: ${selection.date} в ${time}`;
+            
+            bar.style.display = 'block';
+            btn.innerText = `Записаться на ${time}`;
+            
+            // Вибрация при выборе (Taptic Engine)
+            if(tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
         }
 
-        // --- НАВИГАЦИЯ ---
         function goToStep(stepNumber) {
-            // Скрываем все экраны
             document.querySelectorAll('.container').forEach(el => el.classList.remove('active'));
-            // Показываем нужный
             document.getElementById('step' + stepNumber).classList.add('active');
             
-            // Управление кнопкой "Назад" в самом Телеграме (опционально)
-            if (stepNumber === 0) {
-                tg.BackButton.hide();
-            } else {
+            // Прячем нижний бар при переходе назад
+            if (stepNumber < 2) {
+                document.getElementById('bottom-bar').style.display = 'none';
+            }
+
+            if (stepNumber === 0) tg.BackButton.hide();
+            else {
                 tg.BackButton.show();
-                tg.BackButton.onClick(() => {
-                    goToStep(stepNumber - 1);
-                });
+                tg.BackButton.onClick(() => goToStep(stepNumber - 1));
             }
         }
 
-        // --- ОТПРАВКА ДАННЫХ БОТУ ---
         function sendData() {
             const btn = document.getElementById('custom-main-btn');
             btn.innerText = "⏳ Оформляем...";
             btn.style.opacity = "0.7";
-            
-            // Отправляем JSON с данными обратно в бот
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
             tg.sendData(JSON.stringify(selection)); 
         }
     </script>
